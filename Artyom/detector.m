@@ -8,6 +8,7 @@ function [V]= detector(sequence,N,root,channel,K,SNRdb,M,coherent_or_not)
 % mode 3 - test noise sequnce
 % N - length of sequnce
 % root - root of ZC sequnce (Use only in ZC)
+
 % channel:
 % mode 1 - gaus channel
 % mode 2 - rayleigh channel
@@ -16,6 +17,7 @@ function [V]= detector(sequence,N,root,channel,K,SNRdb,M,coherent_or_not)
 % M -  number of antenna array elements
 % coherent_or_not:
 % mode 0 - if you use non-coherent reciever
+
 % parameters of the antenna array:
 lambda=0.11; % [meter] MTS
 d=0.5; % [meter] the distance between the antenna elements that the correlation coefficient is 0.4 
@@ -30,19 +32,24 @@ if n<8
     K=channel;
     channel=root;
 end
+
 x=zeros(M,N); % sequence on the transmitter
 V=zeros(1,K); % matched filter output
 S=zeros(M,1); % vector of antenna array
+
+% support vector:
 noise=zeros(M,N);
 noiseray=zeros(M,N);
 s1=zeros(M,N);
+
+%generate vector of antenna array
     for i=1:M
         S(i)=exp(1i*2*pi/lambda*d*sin(phi)*(i-1));
     end
 
 % sequence genereation block:
  if sequence==1 || sequence==3 %ZC
-      Phase=zeros(1,N); 
+        Phase=zeros(1,N); 
       for i=1:N
         Phase(i)=2*pi/N*root*(i-1)*((i-1)+1)/2;
       end
@@ -51,8 +58,8 @@ s1=zeros(M,N);
       end
  elseif sequence==2 %Goley
          switch N
-        case 2
-            x1=[1 1];
+        case 2 %complimentary pairs
+            x1=[1 1];  
             x2=[1 -1];
         case 4
             x1=[1 1 1 -1];
@@ -101,6 +108,7 @@ s1=zeros(M,N);
  %test gaus channel:
   if (channel==1) && (sequence==3) 
         for l=1:K
+%                noise=(randn(M,N)+(1i*randn(M,N)))./sqrt(2);
             noise1=(randn(M,N)+(1i*randn(M,N)))./sqrt(2);
                     for k=1:N
                      noise(:,k)=S.*noise1(:,k);
@@ -116,6 +124,8 @@ s1=zeros(M,N);
         for l=1:K
             noise=(randn(M,N)+(1i*randn(M,N)))./sqrt(2);
             H=(randn(M,N)+(1i*randn(M,N)));
+        
+                % weighting coefficients obtained by the SVD technique:
             L=svd(H);
             L=L.^2;
             
@@ -135,14 +145,20 @@ s1=zeros(M,N);
   % gaus channel
   elseif (channel==1)
           snr=10^(0.1*SNRdb);
-          for k=1:N
-                    s1(:,k)=S.*x(:,k);
-          end
-        for l=1:K
-                    noise=(randn(M,N)+(1i*randn(M,N)))./sqrt(2*snr);
-                    y=s1+noise;
+%           for k=1:N
+%                     s1(:,k)=S.*x(:,k);
+%           end
+         for l=1:K
+                   noise=(randn(M,N)+(1i*randn(M,N)));
+                      %y=s1+noise;
+                    y=x+noise./sqrt(2*snr);
           if (coherent_or_not==0)
             V(l)=sum(sum((abs(x.*conj(y))).^2));
+%             a=(abs(x.*conj(y)));
+%             a=sort(a);
+%             f=chi2pdf(a,20);
+%            
+%             plot(a,f);
           else
              V(l)=abs(sum(sum((x.*conj(y))))); 
           end
