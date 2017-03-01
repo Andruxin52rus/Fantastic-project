@@ -7,7 +7,7 @@ SEQUENCE_LENGTH = 63;
 
 % S - training matrix. S(1:NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1) is a first
 % vector and so on
-S = transp(zeros(NUMBER_OF_RAYS, NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1)); % (8.1.27) and (8.1.28)
+S = zeros(NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1, NUMBER_OF_RAYS); % (8.1.27) and (8.1.28)
 sequence = generateZadoffChu(SEQUENCE_LENGTH, 5, 0); % Zadoff-Chu sequence
 % look at the (8.1.27) formula to understand that cycle
 for i = 1 : NUMBER_OF_RAYS
@@ -16,11 +16,11 @@ for i = 1 : NUMBER_OF_RAYS
     end
 end
 % H - channel coefficients (rayleigh distribution)
-H = transp(randn(1, NUMBER_OF_RAYS) + 1i * randn(1, NUMBER_OF_RAYS));
+H = (randn(NUMBER_OF_RAYS, 1) + 1i * randn(NUMBER_OF_RAYS, 1)) / sqrt(2);
 % Z - gaussian noise vector
-Z = transp(randn(1, NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1) + 1i * randn(1, NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1));
+Z = (randn(NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1, 1) + 1i * randn(NUMBER_OF_RAYS + SEQUENCE_LENGTH - 1, 1)) / sqrt(2);
 % X - result matrix of received sequence after going through channel
 X = S * H + Z; % (8.1.29)
-M = conj(transp(S)) * S; % p. 314
-R = conj(transp(S)) * X; % p. 314
+M = S' * S; % p. 314
+R = S' * X; % p. 314
 H_estimate = M^(-1) * R; % channel estimate
