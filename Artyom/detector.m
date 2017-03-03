@@ -42,10 +42,6 @@ noise=zeros(M,N);
 noiseray=zeros(M,N);
 s1=zeros(M,N);
 
-%generate vector of antenna array
-    for i=1:M
-        S(i)=exp(1i*2*pi/lambda*d*sin(phi)*(i-1));
-    end
 
 % sequence genereation block:
  if sequence==1 || sequence==3 %ZC
@@ -108,17 +104,21 @@ s1=zeros(M,N);
  %test gaus channel:
   if (channel==1) && (sequence==3) 
         for l=1:K
-%                noise=(randn(M,N)+(1i*randn(M,N)))./sqrt(2);
             noise1=(randn(M,N)+(1i*randn(M,N)))./sqrt(2);
-                    for k=1:N
-                     noise(:,k)=S.*noise1(:,k);
-                    end
+
           if (coherent_or_not==0)
-            V(l)=sum(sum((abs(x.*conj(noise))).^2));
+            V(l)=abs(sum(sum((x.*conj(noise1)).^2)));
           else
-             V(l)=abs(sum(sum((x.*conj(noise))))); 
+             V(l)=abs(sum(sum((x.*conj(noise1))))); 
           end
         end
+%         V=sort(V);
+%          y=[V' V'];
+%          b=ones(1,K)';
+%          b=[b*64 b*128];
+%          f=chi2pdf(y,b);
+%          plot(y,f);
+%          grid on
   % test rayleigh channel
   elseif (channel==2) && (sequence==3)
         for l=1:K
@@ -132,12 +132,12 @@ s1=zeros(M,N);
               
           if (coherent_or_not==0)
                for k=1:N
-                   noiseray(:,k)=S.*H(:,k).*noise(:,k)+S.*noise(:,k); 
+                   noiseray(:,k)=H(:,k).*noise(:,k)+noise(:,k); 
                end
             V(l)=sum(sum((abs(x.*conj(noiseray))).^2));
           else
                for k=1:N
-                    noiseray(:,k)=L.*S.*H(:,k).*noise(:,k)+L.*S.*noise(:,k);
+                    noiseray(:,k)=L.*H(:,k).*noise(:,k)+L.*noise(:,k);
                end
             V(l)=abs(sum(sum((x.*conj(noiseray))))); 
           end
@@ -145,24 +145,21 @@ s1=zeros(M,N);
   % gaus channel
   elseif (channel==1)
           snr=10^(0.1*SNRdb);
-%           for k=1:N
-%                     s1(:,k)=S.*x(:,k);
-%           end
+
          for l=1:K
-                   noise=(randn(M,N)+(1i*randn(M,N)));
-                      %y=s1+noise;
-                    y=x+noise./sqrt(2*snr);
+                   noise=(randn(M,N)+(1i*randn(M,N)));      
+                    y=sqrt(2*snr).*x+noise;
           if (coherent_or_not==0)
-            V(l)=sum(sum((abs(x.*conj(y))).^2));
-%             a=(abs(x.*conj(y)));
-%             a=sort(a);
-%             f=chi2pdf(a,20);
-%            
-%             plot(a,f);
+             V(l)=abs(sum(sum((x.*conj(y)).^2)));
+             
           else
              V(l)=abs(sum(sum((x.*conj(y))))); 
           end
-        end
+         end
+         
+       %  disp(a)
+      %   disp(a1)
+         
    % rayleigh channel
   elseif (channel==2) 
        snr=10^(0.1*SNRdb);
