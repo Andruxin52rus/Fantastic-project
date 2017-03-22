@@ -1,4 +1,4 @@
-% 1-ray channel with 'angle' and 'd' have been defined way that turning 
+% 1-ray channel with 'angle' and 'd' have been defined the way that turning 
 % input '1' to '1i' to check if result is correct. Test is passed 
 
 input = [1]
