@@ -1,15 +1,15 @@
-function [V]= detector_new(sequence,N,root,K,SNRdb,M,coherent_or_not)
-% Optimal detection of sequences Zadoff-Chu or Goley in white
-% gausian noise 
-
+function [V]= detector(sequence,N,root,K,SNRdb,M,coherent_or_not)
+% Optimal detection of sequences Zadoff-Chu or Goley in white gausian noise
+%
+% Optional:
+% --------------
+%
 % sequence:
 % mode 1 - Zadoff-Chu ZC
 % mode 2 - Goley
 % mode 3 - test noise sequnce
 % N - length of sequnce
 % root - root of ZC sequnce (Use only in ZC)
-
-
 % K- number of experimental realizations
 % SNRdb - signal to noise ratio in Db
 % M -  number of antenna array elements
@@ -17,8 +17,7 @@ function [V]= detector_new(sequence,N,root,K,SNRdb,M,coherent_or_not)
 % mode 0 - if you use non-coherent reciever
 
 
-
-
+% Initialization:
 n=nargin; 
 if n<7
     coherent_or_not=M;
@@ -26,18 +25,16 @@ if n<7
     SNRdb=K;
     K=root;
 end
-len=0; 
+len=500; 
 x=zeros(M,N+len); % sequence on the transmitter
 V=zeros(1,K); % matched filter output
+noise=zeros(M,N+len); % matrix of noise
 
 
-% support vector:
-noise=zeros(M,N+len);
-
-
-
-% sequence genereation block:
- if (sequence==1 || sequence==3)   %ZC
+% ==================== Part 1: Sequence genereation block  ====================
+ %   ZC:
+ 
+ if (sequence==1 || sequence==3)  
         Phase=zeros(1,N); 
         
           for i=1:N
@@ -48,17 +45,18 @@ noise=zeros(M,N+len);
             end
           end
           x1=exp(-1i.*Phase);
-          E=abs(sum(x1.*conj(x1)));
           n=randn(1,len)+1i*randn(1,len);
-          x1=[x1 n];
+          x1=[n x1];
+          E=abs(sum(x1.*conj(x1)));
         for i=1:M
           x(i,:)=x1;
         end
-      
         
- elseif sequence==2 %Goley
+  %  Goley:    
+        
+ elseif sequence==2 
          switch N
-        case 2 %complimentary pairs
+        case 2     %   complimentary pairs
             x1=[1 1];  
             x2=[1 -1];
         case 4
@@ -97,15 +95,16 @@ noise=zeros(M,N+len);
         otherwise
             disp('GCPs exist only are: 1; 2; 4; 8; 10; 16; 20; 26; 32; 40; 52; 64; 80');
          end
+          E=abs(sum(x1.*conj(x1)));
          for i=1:M
             x(i,:)=x1;
          end
     else  
-     disp('ONLY GL,ZC or Test sequences can be use in this program now');
+     disp('Only GL,ZC or Test sequences can be use in this program now');
  end
  
-
- %test gaus channel:
+% ======================= Part 2: Only noise on the reciever  =======================
+ 
   if  (sequence==3) 
         for l=1:K
             noise=(randn(M,N+len)+1i*randn(M,N+len))/sqrt(2);
@@ -118,11 +117,11 @@ noise=zeros(M,N+len);
           end
         end
 
-   
-  % ZC or Goley
+   % =================== Part 3: ZC or Goley on the reciever ===================
+ 
   elseif (sequence==1 || sequence==2) 
             snr=10^(0.1*SNRdb);
-            %sigma=sqrt(E/snr);
+            
          for l=1:K
                    noise=((randn(M,N+len)+(1i*randn(M,N+len))))/sqrt(2);      
                     y=sqrt(snr)*x+noise;
@@ -137,6 +136,7 @@ noise=zeros(M,N+len);
          end
         
   else
-           disp('ONLY Gaus and Rayleigh channels can be use in this program now');
+           disp('Only Gaus  channel can be use in this program now');
   end
+  
 end
